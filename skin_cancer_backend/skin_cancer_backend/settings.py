@@ -3,7 +3,7 @@ from pathlib import Path
 import environ
 
 env = environ.Env()
-environ.Env.read_env()
+environ.Env.read_env('.env')
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -19,7 +19,6 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
     'rest_framework',
     'patients.apps.PatientsConfig',
     'doctors.apps.DoctorsConfig',
