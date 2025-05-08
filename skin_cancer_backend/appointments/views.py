@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Appointment
 from .serializers import AppointmentSerializer
-from patients.models import Patient
+from patients.models import Patients
 from doctors.models import Doctor
 from rest_framework.permissions import IsAuthenticated
 

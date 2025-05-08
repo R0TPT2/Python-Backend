@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
-from patients.models import Patient
+from patients.models import Patients
 from doctors.models import Doctor
 
 class Appointment(models.Model):
@@ -10,7 +10,7 @@ class Appointment(models.Model):
         CANCELLED = 'CANCELLED'
 
     id = models.UUIDField(primary_key=True, editable=False)
-    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='appointments')
+    patient = models.ForeignKey(Patients, on_delete=models.CASCADE, related_name='appointments')
     doctor = models.ForeignKey(Doctor, on_delete=models.SET_NULL, null=True, blank=True, related_name='appointments')
     clinic_location = models.TextField(null=True, blank=True)
     scheduled_time = models.DateTimeField()

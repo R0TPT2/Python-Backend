@@ -1,11 +1,11 @@
 from rest_framework import serializers
 from .models import Appointment
-from patients.models import Patient
+from patients.models import Patients
 from doctors.models import Doctor
 
 class PatientSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Patient
+        model = Patients
         fields = ['national_id', 'name', 'email']
 
 class DoctorSerializer(serializers.ModelSerializer):

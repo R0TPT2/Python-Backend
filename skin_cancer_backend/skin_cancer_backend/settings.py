@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'rest_framework',
+    'rest_framework_simplejwt',
     'patients.apps.PatientsConfig',
     'doctors.apps.DoctorsConfig',
     'medical_images.apps.MedicalImagesConfig',

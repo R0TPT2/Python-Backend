@@ -1,85 +1,131 @@
 from rest_framework import generics, status
-from rest_framework.response import Response
+import jwt
+import datetime
+from rest_framework import serializers, status
 from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework_simplejwt.settings import api_settings
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from .models import User, Patient, Doctor
-from .serializers import UserSerializer, PatientSerializer, DoctorSerializer, LoginSerializer
-from django.contrib.auth import authenticate
+from patients.models import Patients
+from doctors.models import Doctor
+from .serializers import PatientSerializer, DoctorSerializer, PatientLoginSerializer, DoctorLoginSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
-class RegisterUserView(APIView):
+class PatientRegisterView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = UserSerializer(data=request.data)
+        serializer = PatientSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
-            if request.data.get('is_doctor'):
-                doctor_serializer = DoctorSerializer(data=request.data)
-                if doctor_serializer.is_valid():
-                    doctor_serializer.save(user=user)
-            else:
-                patient_serializer = PatientSerializer(data=request.data)
-                if patient_serializer.is_valid():
-                    patient_serializer.save(user=user)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class LoginView(APIView):
+class PatientLoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = LoginSerializer(data=request.data)
+        serializer = PatientLoginSerializer(data=request.data)
         if serializer.is_valid():
-            email = serializer.validated_data.get('email')
-            password = serializer.validated_data.get('password')
-            user = authenticate(email=email, password=password)
-            if user:
-                refresh = RefreshToken.for_user(user)
-                return Response({
-                    'refresh': str(refresh),
-                    'access': str(refresh.access_token),
-                }, status=status.HTTP_200_OK)
-            else:
-                return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+            national_id = serializer.validated_data['national_id']
+            password_hash = serializer.validated_data['password_hash']
+
+            try:
+                patient = Patients.objects.get(national_id=national_id)
+                
+                if patient.password_hash == password_hash:
+                    access_payload = {
+                        'user_id': patient.national_id,
+                        'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
+                        'iat': datetime.datetime.utcnow(),
+                        'token_type': 'access'
+                    }
+                    
+                    refresh_payload = {
+                        'user_id': patient.national_id,
+                        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=14),
+                        'iat': datetime.datetime.utcnow(),
+                        'token_type': 'refresh'
+                    }
+                    
+                    access_token = jwt.encode(
+                        access_payload, 
+                        api_settings.SIGNING_KEY, 
+                        algorithm=api_settings.ALGORITHM
+                    )
+                    
+                    refresh_token = jwt.encode(
+                        refresh_payload, 
+                        api_settings.SIGNING_KEY, 
+                        algorithm=api_settings.ALGORITHM
+                    )
+                    
+                    return Response({
+                        'refresh': refresh_token,
+                        'access': access_token,
+                    }, status=status.HTTP_200_OK)
+                else:
+                    return Response(
+                        {'detail': 'Invalid credentials'},
+                        status=status.HTTP_401_UNAUTHORIZED
+                    )
+            except Patients.DoesNotExist:
+                return Response(
+                    {'detail': 'Invalid credentials'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class UserDetailView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        user = request.user
-        serializer = UserSerializer(user)
-        return Response(serializer.data)
 
 class PatientProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
-            patient = Patient.objects.get(user=request.user)
+            patient = Patients.objects.get(email=request.user.email)
             serializer = PatientSerializer(patient)
             return Response(serializer.data)
-        except Patient.DoesNotExist:
+        except Patients.DoesNotExist:
             return Response({'detail': 'Patient not found'}, status=status.HTTP_404_NOT_FOUND)
 
     def put(self, request):
         try:
-            patient = Patient.objects.get(user=request.user)
+            patient = Patients.objects.get(email=request.user.email)
             serializer = PatientSerializer(patient, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Patient.DoesNotExist:
+        except Patients.DoesNotExist:
             return Response({'detail': 'Patient not found'}, status=status.HTTP_404_NOT_FOUND)
+
+class DoctorLoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = DoctorLoginSerializer(data=request.data)
+        if serializer.is_valid():
+            doctor_id = serializer.validated_data.get('doctor_id')
+            password = serializer.validated_data.get('password_hash')
+            try:
+                doctor = Doctor.objects.get(doctor_id=doctor_id)
+                if doctor.password_hash == password:
+                    refresh = RefreshToken.for_user(doctor)
+                    return Response({
+                        'refresh': str(refresh),
+                        'access': str(refresh.access_token),
+                    }, status=status.HTTP_200_OK)
+                else:
+                    return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+            except Doctor.DoesNotExist:
+                return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DoctorProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
-            doctor = Doctor.objects.get(user=request.user)
+            doctor = Doctor.objects.get(email=request.user.email)
             serializer = DoctorSerializer(doctor)
             return Response(serializer.data)
         except Doctor.DoesNotExist:
@@ -87,7 +133,7 @@ class DoctorProfileView(APIView):
 
     def put(self, request):
         try:
-            doctor = Doctor.objects.get(user=request.user)
+            doctor = Doctor.objects.get(email=request.user.email)
             serializer = DoctorSerializer(doctor, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()

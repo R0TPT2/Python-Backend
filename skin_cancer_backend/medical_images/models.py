@@ -1,5 +1,5 @@
 from django.db import models
-from patients.models import Patient
+from patients.models import Patients
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import MaxValueValidator, MinValueValidator
 
@@ -14,7 +14,7 @@ class MedicalImage(models.Model):
         HIGH = 2
 
     id = models.UUIDField(primary_key=True, editable=False)
-    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='medical_images')
+    patient = models.ForeignKey(Patients, on_delete=models.CASCADE, related_name='medical_images')
     image = models.ImageField(upload_to='images/')
     diagnosis_result = models.CharField(max_length=10, choices=DiagnosisResult.choices)
     primary_ai_score = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1)])

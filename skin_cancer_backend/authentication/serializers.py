@@ -1,33 +1,54 @@
 from rest_framework import serializers
-from django.contrib.auth import authenticate
-from .models import User, Patient, Doctor
+from patients.models import Patients
+from doctors.models import Doctor
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['id', 'email', 'is_active', 'is_staff']
-        read_only_fields = ['is_active', 'is_staff']
 
 class PatientSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
-
     class Meta:
-        model = Patient
-        fields = ['user', 'national_id', 'name', 'phone', 'gender', 'current_medical_conditions', 'allergies', 'past_surgeries', 'family_medical_history', 'current_medications']
+        model = Patients
+        fields = ['national_id', 'name', 'email', 'password_hash', 'phone', 'gender', 'current_medical_conditions', 'allergies', 'past_surgeries', 'family_medical_history', 'current_medications']
+
+    def create(self, validated_data):
+        patient = Patients.objects.create(**validated_data)
+        return patient  
+
+class PatientLoginSerializer(serializers.Serializer):
+    national_id = serializers.CharField()
+    password_hash = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        national_id = data.get('national_id')
+        password_hash = data.get('password_hash')
+
+        if not national_id or not password_hash:
+            raise serializers.ValidationError("National ID and password are required.")
+
+        return {
+            'national_id': national_id,
+            'password_hash': password_hash
+        }
 
 class DoctorSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
-
     class Meta:
         model = Doctor
-        fields = ['user', 'doctor_id', 'name', 'specialty', 'clinic_location', 'operating_hours', 'education', 'experience']
+        fields = ['doctor_id', 'name', 'email', 'password_hash', 'specialty', 'clinic_location', 'operating_hours', 'education', 'experience']
 
-class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    def create(self, validated_data):
+        doctor = Doctor.objects.create(**validated_data)
+        return doctor
+
+class DoctorLoginSerializer(serializers.Serializer):
+    doctor_id = serializers.CharField()
     password = serializers.CharField(write_only=True)
 
     def validate(self, data):
-        user = authenticate(email=data['email'], password=data['password'])
-        if not user:
+        doctor_id = data.get('doctor_id')
+        password = data.get('password_hash')
+        try:
+            doctor = Doctor.objects.get(doctor_id=doctor_id)
+            if doctor.password_hash != password:
+                raise serializers.ValidationError("Invalid credentials")
+        except Doctor.DoesNotExist:
             raise serializers.ValidationError("Invalid credentials")
+        data["doctor"] = doctor
         return data

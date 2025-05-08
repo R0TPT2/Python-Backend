@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth.models import User
 
@@ -12,7 +13,12 @@ class Doctor(models.Model):
     operating_hours = models.TextField(null=True, blank=True)
     education = models.JSONField(default=list)
     experience = models.JSONField(default=list)
-    created_at = models.DateTimeField(auto_now_add=True)
+
+    def set_password(self, raw_password):
+        self.password_hash = make_password(raw_password)
+
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.password_hash)
 
     def __str__(self):
         return self.name

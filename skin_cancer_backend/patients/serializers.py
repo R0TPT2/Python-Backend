@@ -1,9 +1,9 @@
 from rest_framework import serializers
-from .models import Patient
+from .models import Patients
 
 class PatientSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Patient
+        model = Patients
         fields = '__all__'
         read_only_fields = ['created_at']
 
