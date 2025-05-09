@@ -10,6 +10,7 @@ from patients.models import Patients
 from doctors.models import Doctor
 from .serializers import PatientSerializer, DoctorSerializer, PatientLoginSerializer, DoctorLoginSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth.hashers import check_password
 
 class PatientRegisterView(APIView):
     permission_classes = [AllowAny]
@@ -23,17 +24,17 @@ class PatientRegisterView(APIView):
 
 class PatientLoginView(APIView):
     permission_classes = [AllowAny]
-
+    
     def post(self, request):
         serializer = PatientLoginSerializer(data=request.data)
         if serializer.is_valid():
             national_id = serializer.validated_data['national_id']
-            password_hash = serializer.validated_data['password_hash']
-
+            password = serializer.validated_data['password']
+            
             try:
                 patient = Patients.objects.get(national_id=national_id)
                 
-                if patient.password_hash == password_hash:
+                if check_password(password, patient.password_hash):
                     access_payload = {
                         'user_id': patient.national_id,
                         'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
@@ -49,14 +50,14 @@ class PatientLoginView(APIView):
                     }
                     
                     access_token = jwt.encode(
-                        access_payload, 
-                        api_settings.SIGNING_KEY, 
+                        access_payload,
+                        api_settings.SIGNING_KEY,
                         algorithm=api_settings.ALGORITHM
                     )
                     
                     refresh_token = jwt.encode(
-                        refresh_payload, 
-                        api_settings.SIGNING_KEY, 
+                        refresh_payload,
+                        api_settings.SIGNING_KEY,
                         algorithm=api_settings.ALGORITHM
                     )
                     
