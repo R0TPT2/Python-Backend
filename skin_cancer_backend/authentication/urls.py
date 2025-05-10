@@ -7,4 +7,5 @@ urlpatterns = [
     path('patient/profile/', views.PatientProfileView.as_view(), name='patient-profile'),
     path('doctor/login/', views.DoctorLoginView.as_view(), name='doctor-login'),
     path('doctor/profile/', views.DoctorProfileView.as_view(), name='doctor-profile'),
+    path('token/', views.ObtainAuthToken.as_view(), name='api-token'),
 ]

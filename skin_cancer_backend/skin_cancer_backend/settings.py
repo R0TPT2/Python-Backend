@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework.authtoken',
     'patients.apps.PatientsConfig',
     'doctors.apps.DoctorsConfig',
     'medical_images.apps.MedicalImagesConfig',
@@ -32,6 +33,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -39,11 +41,15 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = True  
+CORS_ALLOW_CREDENTIALS = True
+
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  
+
 
 ROOT_URLCONF = 'skin_cancer_backend.urls'
 

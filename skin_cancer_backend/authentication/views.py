@@ -11,6 +11,8 @@ from doctors.models import Doctor
 from .serializers import PatientSerializer, DoctorSerializer, PatientLoginSerializer, DoctorLoginSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.hashers import check_password
+from rest_framework.authtoken.models import Token
+from django.contrib.auth import authenticate
 
 class PatientRegisterView(APIView):
     permission_classes = [AllowAny]
@@ -22,6 +24,23 @@ class PatientRegisterView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class ObtainAuthToken(APIView):
+    permission_classes = []  
+    
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        
+        user = authenticate(username=username, password=password)
+        
+        if not user:
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+            
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({'token': token.key})
+
+    
 class PatientLoginView(APIView):
     permission_classes = [AllowAny]
     
