@@ -101,24 +101,58 @@ class PatientProfileView(APIView):
 
 class DoctorLoginView(APIView):
     permission_classes = [AllowAny]
-
+    
     def post(self, request):
         serializer = DoctorLoginSerializer(data=request.data)
         if serializer.is_valid():
-            doctor_id = serializer.validated_data.get('doctor_id')
-            password = serializer.validated_data.get('password_hash')
+            doctor_id = serializer.validated_data['doctor_id']
+            password = serializer.validated_data['password']
+            
             try:
                 doctor = Doctor.objects.get(doctor_id=doctor_id)
-                if doctor.password_hash == password:
-                    refresh = RefreshToken.for_user(doctor)
+                
+                if check_password(password, doctor.password_hash):
+                    access_payload = {
+                        'user_id': doctor.doctor_id,
+                        'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
+                        'iat': datetime.datetime.utcnow(),
+                        'token_type': 'access'
+                    }
+                    
+                    refresh_payload = {
+                        'user_id': doctor.doctor_id,
+                        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=14),
+                        'iat': datetime.datetime.utcnow(),
+                        'token_type': 'refresh'
+                    }
+                    
+                    access_token = jwt.encode(
+                        access_payload,
+                        api_settings.SIGNING_KEY,
+                        algorithm=api_settings.ALGORITHM
+                    )
+                    
+                    refresh_token = jwt.encode(
+                        refresh_payload,
+                        api_settings.SIGNING_KEY,
+                        algorithm=api_settings.ALGORITHM
+                    )
+                    
                     return Response({
-                        'refresh': str(refresh),
-                        'access': str(refresh.access_token),
+                        'refresh': refresh_token,
+                        'access': access_token,
+                        'name': doctor.name  # Include doctor's name for the frontend
                     }, status=status.HTTP_200_OK)
                 else:
-                    return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+                    return Response(
+                        {'detail': 'Invalid credentials'},
+                        status=status.HTTP_401_UNAUTHORIZED
+                    )
             except Doctor.DoesNotExist:
-                return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+                return Response(
+                    {'detail': 'Invalid credentials'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DoctorProfileView(APIView):

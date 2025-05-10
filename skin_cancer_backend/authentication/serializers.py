@@ -48,18 +48,19 @@ class DoctorSerializer(serializers.ModelSerializer):
         doctor = Doctor.objects.create(**validated_data)
         return doctor
 
+
 class DoctorLoginSerializer(serializers.Serializer):
     doctor_id = serializers.CharField()
     password = serializers.CharField(write_only=True)
-
+    
     def validate(self, data):
         doctor_id = data.get('doctor_id')
-        password = data.get('password_hash')
-        try:
-            doctor = Doctor.objects.get(doctor_id=doctor_id)
-            if doctor.password_hash != password:
-                raise serializers.ValidationError("Invalid credentials")
-        except Doctor.DoesNotExist:
-            raise serializers.ValidationError("Invalid credentials")
-        data["doctor"] = doctor
-        return data
+        password = data.get('password')
+        
+        if not doctor_id or not password:
+            raise serializers.ValidationError("Doctor ID and password are required.")
+            
+        return {
+            'doctor_id': doctor_id,
+            'password': password
+        }
