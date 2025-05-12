@@ -14,5 +14,10 @@ class Patients(models.Model):
     family_medical_history = ArrayField(models.CharField(max_length=255), default=list)
     current_medications = ArrayField(models.CharField(max_length=255), default=list)
 
+
+    @property
+    def is_authenticated(self):
+        return True
+
     def __str__(self):
         return self.name

@@ -8,4 +8,6 @@ urlpatterns = [
     path('doctor/login/', views.DoctorLoginView.as_view(), name='doctor-login'),
     path('doctor/profile/', views.DoctorProfileView.as_view(), name='doctor-profile'),
     path('token/', views.ObtainAuthToken.as_view(), name='api-token'),
+    path('jwt-test/', views.JWTAuthenticationTestView.as_view(), name='jwt-test'),
+    path('auth-test/', views.CustomAuthMiddlewareTestView.as_view(), name='auth-test'),
 ]

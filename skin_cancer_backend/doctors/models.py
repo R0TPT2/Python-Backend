@@ -14,6 +14,10 @@ class Doctor(models.Model):
     education = models.JSONField(default=list)
     experience = models.JSONField(default=list)
 
+    @property
+    def is_authenticated(self):
+        return True
+
     def set_password(self, raw_password):
         self.password_hash = make_password(raw_password)
 

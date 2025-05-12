@@ -32,6 +32,23 @@ INSTALLED_APPS = [
     'corsheaders',
 ]
 
+JWT_AUTH = {
+    'SIGNING_KEY': SECRET_KEY,
+    'ALGORITHM': 'HS256',
+    'ACCESS_TOKEN_LIFETIME': 60 * 60,  
+    'REFRESH_TOKEN_LIFETIME': 14 * 24 * 60 * 60,  
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'authentication.middleware.CustomJWTAuthentication',  
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
