@@ -5,6 +5,24 @@ from .models import Patients
 from .serializers import PatientSerializer
 from rest_framework.permissions import IsAuthenticated
 
+
+class PatientLookupView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, national_id, format=None):
+        try:
+            patient = Patients.objects.get(national_id=national_id)
+            return Response({
+                'national_id': patient.national_id,
+                'name': patient.name,
+                'email': patient.email,
+                'phone': patient.phone,
+                'gender': patient.gender
+            })
+        except Patients.DoesNotExist:
+            return Response({'error': 'Patient not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+
 class PatientListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     queryset = Patients.objects.all()

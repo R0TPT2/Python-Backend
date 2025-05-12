@@ -29,7 +29,7 @@ class ObtainAuthToken(APIView):
     permission_classes = []  
     
     def post(self, request):
-        username = request.data.get('username')
+        username = request.data.get('name')
         password = request.data.get('password')
         
         user = authenticate(username=username, password=password)
@@ -126,10 +126,10 @@ class DoctorLoginView(APIView):
         if serializer.is_valid():
             doctor_id = serializer.validated_data['doctor_id']
             password = serializer.validated_data['password']
-            
+        
             try:
                 doctor = Doctor.objects.get(doctor_id=doctor_id)
-                
+            
                 if check_password(password, doctor.password_hash):
                     access_payload = {
                         'user_id': doctor.doctor_id,
@@ -137,30 +137,31 @@ class DoctorLoginView(APIView):
                         'iat': datetime.datetime.utcnow(),
                         'token_type': 'access'
                     }
-                    
+                
                     refresh_payload = {
                         'user_id': doctor.doctor_id,
                         'exp': datetime.datetime.utcnow() + datetime.timedelta(days=14),
                         'iat': datetime.datetime.utcnow(),
                         'token_type': 'refresh'
                     }
-                    
+                
                     access_token = jwt.encode(
                         access_payload,
                         api_settings.SIGNING_KEY,
                         algorithm=api_settings.ALGORITHM
                     )
-                    
+                
                     refresh_token = jwt.encode(
                         refresh_payload,
                         api_settings.SIGNING_KEY,
                         algorithm=api_settings.ALGORITHM
                     )
-                    
+                
                     return Response({
                         'refresh': refresh_token,
                         'access': access_token,
-                        'name': doctor.name  # Include doctor's name for the frontend
+                        'user_id': doctor.doctor_id,
+                        'name': doctor.name
                     }, status=status.HTTP_200_OK)
                 else:
                     return Response(
@@ -173,10 +174,10 @@ class DoctorLoginView(APIView):
                     status=status.HTTP_401_UNAUTHORIZED
                 )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 
 class DoctorProfileView(APIView):
     permission_classes = [IsAuthenticated]
-
     def get(self, request):
         try:
             doctor = Doctor.objects.get(email=request.user.email)
