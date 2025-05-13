@@ -1,12 +1,22 @@
-from django.urls import path
-from . import views
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 
+from .views import AppointmentViewSet
+
+# Create a router and register our viewset
+router = DefaultRouter()
+router.register(r'appointments', AppointmentViewSet, basename='appointment')
+
+# The API URLs are determined automatically by the router
 urlpatterns = [
-    path('create/', views.AppointmentCreateView.as_view(), name='appointment-create'),
-    path('list/', views.AppointmentListView.as_view(), name='appointment-list'),
-    path('detail/<uuid:pk>/', views.AppointmentDetailView.as_view(), name='appointment-detail'),
-    path('update/<uuid:pk>/', views.AppointmentUpdateView.as_view(), name='appointment-update'),
-    path('delete/<uuid:pk>/', views.AppointmentDeleteView.as_view(), name='appointment-delete'),
-    path('confirm/<uuid:pk>/', views.AppointmentConfirmView.as_view(), name='appointment-confirm'),
-    path('cancel/<uuid:pk>/', views.AppointmentCancelView.as_view(), name='appointment-cancel'),
+    path('', include(router.urls)),
 ]
+
+# This will generate the following URL patterns:
+# - /appointments/ - GET (list), POST (create)
+# - /appointments/{id}/ - GET (retrieve), PUT (update), PATCH (partial_update), DELETE (destroy)
+# - /appointments/today/ - GET (custom action for today's appointments)
+# - /appointments/by_doctor/ - GET (custom action for doctor's appointments)
+# - /appointments/by_patient/ - GET (custom action for patient's appointments)
+# - /appointments/{id}/confirm/ - POST (custom action to confirm an appointment)
+# - /appointments/{id}/cancel/ - POST (custom action to cancel an appointment)
