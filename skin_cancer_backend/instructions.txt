@@ -1,0 +1,41 @@
+Before proceeding, ensure you have the following installed:
+
+Python 3.8+ (check version using python --version)
+pip (Python package manager)
+PostgreSQL (database system)
+
+Set Up a Virtual Environment :
+
+{ python -m venv venv } ( Create venv folder for python )
+
+{ Get-ExecutionPolicy } ( Gets the policy for PowerShell execution )
+
+{ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process } ( Changes the execution policy for this scope )
+
+{ .\venv\Scripts\Activate } ( Activates your venv )
+
+{ deactivate } ( Deactivate your venv )
+
+Install Dependencies :
+
+pip install -r requirements.txt
+
+Create a .env file in the project root directory, make sure it matches the example.
+
+Create a PostgreSQL database : 
+
+CREATE DATABASE your_database_name;
+
+Apply migrations to set up the database schema :
+
+{ python manage.py makemigrations } ( Creates migration paths )
+
+{ python manage.py migrate } ( Migrates )
+
+Run the Development Server :
+
+{ python manage.py runserver }, { python manage.py runserver 0.0.0.0:8000 } ( starts the server )
+
+By default, the server runs at http://127.0.0.1:8000/.
+
+
