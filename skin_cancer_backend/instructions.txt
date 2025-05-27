@@ -38,4 +38,11 @@ Run the Development Server :
 
 By default, the server runs at http://127.0.0.1:8000/.
 
+The backend uses the media/images/ directory to store uploaded medical images. Ensure the folder exists:
+
+bash :
+
+mkdir -p media/images
+
+
 
